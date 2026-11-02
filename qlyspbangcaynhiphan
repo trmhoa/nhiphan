@@ -1,0 +1,433 @@
+
+#include <iostream>
+#include <iomanip>
+#include <cstring>
+#include <limits>
+#include <new>
+using namespace std;
+
+// Cau truc luu thong tin san pham
+struct Product {
+    int maSP;
+    char tenSP[50];
+    int soLuong;
+    double donGia;
+};
+
+// Cau truc nut cua cay BST
+struct Node {
+    Product sp;
+    Node *left;
+    Node *right;
+};
+
+// Tao nut moi
+Node* taoNut(Product x) {
+    Node *p = new(nothrow) Node;
+
+    if (p == NULL) {
+        cout << "Khong du bo nho!\n";
+        return NULL;
+    }
+
+    p->sp = x;
+    p->left = NULL;
+    p->right = NULL;
+
+    return p;
+}
+
+// Kiem tra thong tin san pham
+bool kiemTra(Product x) {
+    if (x.maSP <= 0) {
+        cout << "Ma san pham phai lon hon 0!\n";
+        return false;
+    }
+
+    if (strlen(x.tenSP) == 0) {
+        cout << "Ten san pham khong duoc de trong!\n";
+        return false;
+    }
+
+    if (x.soLuong < 0) {
+        cout << "So luong khong hop le!\n";
+        return false;
+    }
+
+    if (x.donGia < 0) {
+        cout << "Don gia khong hop le!\n";
+        return false;
+    }
+
+    return true;
+}
+
+// Nhap thong tin san pham
+bool nhapSP(Product &x) {
+    cout << "Nhap ma san pham: ";
+
+    if (!(cin >> x.maSP)) {
+        cout << "Du lieu khong dung!\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        return false;
+    }
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    cout << "Nhap ten san pham: ";
+    cin.getline(x.tenSP, 50);
+
+    if (cin.fail()) {
+        cout << "Ten san pham vuot qua 49 ky tu!\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        return false;
+    }
+
+    cout << "Nhap so luong: ";
+
+    if (!(cin >> x.soLuong)) {
+        cout << "So luong khong hop le!\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        return false;
+    }
+
+    cout << "Nhap don gia: ";
+
+    if (!(cin >> x.donGia)) {
+        cout << "Don gia khong hop le!\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        return false;
+    }
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    return kiemTra(x);
+}
+
+// In tieu de bang
+void inBang() {
+    cout << left
+         << setw(10) << "Ma SP"
+         << setw(22) << "Ten san pham"
+         << setw(12) << "So luong"
+         << setw(15) << "Don gia" << endl;
+
+    cout << "-----------------------------------------------------------\n";
+}
+
+// In thong tin san pham
+void xuatSP(Product x) {
+    cout << left
+         << setw(10) << x.maSP
+         << setw(22) << x.tenSP
+         << setw(12) << x.soLuong
+         << fixed << setprecision(2)
+         << setw(15) << x.donGia << endl;
+}
+
+// Tim kiem san pham theo ma
+Node* timSP(Node *root, int ma) {
+    if (root == NULL)
+        return NULL;
+
+    if (root->sp.maSP == ma)
+        return root;
+
+    if (ma < root->sp.maSP)
+        return timSP(root->left, ma);
+
+    return timSP(root->right, ma);
+}
+
+// Them san pham vao cay
+bool themSP(Node *&root, Product x) {
+    if (root == NULL) {
+        root = taoNut(x);
+
+        if (root == NULL)
+            return false;
+
+        return true;
+    }
+
+    if (x.maSP == root->sp.maSP) {
+        cout << "Ma san pham da ton tai!\n";
+        return false;
+    }
+
+    if (x.maSP < root->sp.maSP)
+        return themSP(root->left, x);
+
+    return themSP(root->right, x);
+}
+
+// Tim nut co ma nho nhat
+Node* nutNhoNhat(Node *root) {
+    if (root == NULL)
+        return NULL;
+
+    while (root->left != NULL) {
+        root = root->left;
+    }
+
+    return root;
+}
+
+// Xoa san pham khoi cay
+void xoaSP(Node *&root, int ma) {
+    if (root == NULL)
+        return;
+
+    if (ma < root->sp.maSP) {
+        xoaSP(root->left, ma);
+    }
+    else if (ma > root->sp.maSP) {
+        xoaSP(root->right, ma);
+    }
+    else {
+        Node *p = root;
+
+        // Nut khong co con
+        if (root->left == NULL && root->right == NULL) {
+            delete root;
+            root = NULL;
+        }
+
+        // Nut chi co con phai
+        else if (root->left == NULL) {
+            root = root->right;
+            delete p;
+        }
+
+        // Nut chi co con trai
+        else if (root->right == NULL) {
+            root = root->left;
+            delete p;
+        }
+
+        // Nut co hai con
+        else {
+            Node *q = nutNhoNhat(root->right);
+
+            root->sp = q->sp;
+
+            xoaSP(root->right, q->sp.maSP);
+        }
+    }
+}
+
+// Duyet cay theo thu tu trai - nut - phai
+void hienThi(Node *root) {
+    if (root == NULL)
+        return;
+
+    hienThi(root->left);
+
+    xuatSP(root->sp);
+
+    hienThi(root->right);
+}
+
+// Dem tong so nut cua cay
+int tongSoNut(Node *root) {
+    if (root == NULL)
+        return 0;
+
+    int trai = tongSoNut(root->left);
+    int phai = tongSoNut(root->right);
+
+    return 1 + trai + phai;
+}
+
+// Tinh chieu cao cay
+int tinhCao(Node *root) {
+    if (root == NULL)
+        return 0;
+
+    int h1 = tinhCao(root->left);
+    int h2 = tinhCao(root->right);
+
+    if (h1 > h2)
+        return h1 + 1;
+
+    return h2 + 1;
+}
+
+// Giai phong cay
+void huyCay(Node *&root) {
+    if (root == NULL)
+        return;
+
+    huyCay(root->left);
+    huyCay(root->right);
+
+    delete root;
+    root = NULL;
+}
+
+// Tao danh sach san pham mau
+void napMau(Node *&root) {
+    Product ds[7] = {
+        {50, "But bi", 120, 5000},
+        {30, "Vo o ly", 80, 12000},
+        {70, "Bia ho so", 35, 15000},
+        {20, "Thuoc ke", 40, 8000},
+        {40, "Tay", 65, 4000},
+        {60, "So tay", 25, 25000},
+        {80, "But chi", 110, 3000}
+    };
+
+    for (int i = 0; i < 7; i++) {
+        if (!themSP(root, ds[i])) {
+            cout << "Khong them duoc san pham ma "
+                 << ds[i].maSP << "!\n";
+            return;
+        }
+    }
+
+    cout << "Nap du lieu mau thanh cong!\n";
+}
+
+// Chuong trinh chinh
+int main() {
+    Node *root = NULL;
+
+    int luaChon;
+    int ma;
+
+    do {
+        cout << "\n========== MENU QUAN LY SAN PHAM ==========\n";
+        cout << "1. Them san pham\n";
+        cout << "2. Tim kiem san pham\n";
+        cout << "3. Xoa san pham\n";
+        cout << "4. Hien thi danh sach tang dan theo ma\n";
+        cout << "5. Dem so nut va tinh chieu cao\n";
+        cout << "6. Tao 7 san pham mau\n";
+        cout << "0. Thoat\n";
+
+        cout << "Nhap lua chon: ";
+
+        if (!(cin >> luaChon)) {
+            cout << "Lua chon khong hop le!\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        switch (luaChon) {
+
+            case 1: {
+                Product x;
+
+                if (nhapSP(x)) {
+                    themSP(root, x);
+                }
+
+                break;
+            }
+
+            case 2: {
+                cout << "Nhap ma san pham can tim: ";
+
+                if (!(cin >> ma)) {
+                    cout << "Ma san pham khong hop le!\n";
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    break;
+                }
+
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                Node *p = timSP(root, ma);
+
+                if (p == NULL) {
+                    cout << "Khong tim thay san pham!\n";
+                }
+                else {
+                    cout << "\nTHONG TIN SAN PHAM TIM DUOC\n";
+                    inBang();
+                    xuatSP(p->sp);
+                }
+
+                break;
+            }
+
+            case 3: {
+                cout << "Nhap ma san pham can xoa: ";
+
+                if (!(cin >> ma)) {
+                    cout << "Ma san pham khong hop le!\n";
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    break;
+                }
+
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                if (timSP(root, ma) == NULL) {
+                    cout << "Khong tim thay san pham!\n";
+                }
+                else {
+                    xoaSP(root, ma);
+                    cout << "Xoa san pham thanh cong!\n";
+                }
+
+                break;
+            }
+
+            case 4: {
+                if (root == NULL) {
+                    cout << "Cay chua co san pham!\n";
+                }
+                else {
+                    cout << "\nDANH SACH SAN PHAM TANG DAN THEO MA\n";
+                    inBang();
+                    hienThi(root);
+                }
+
+                break;
+            }
+
+            case 5: {
+                cout << "Tong so nut: "
+                     << tongSoNut(root) << endl;
+
+                cout << "Chieu cao cay: "
+                     << tinhCao(root) << endl;
+
+                break;
+            }
+
+            case 6: {
+                if (root != NULL) {
+                    cout << "Cay da co du lieu, khong the nap mau!\n";
+                }
+                else {
+                    napMau(root);
+                }
+
+                break;
+            }
+
+            case 0: {
+                huyCay(root);
+                cout << "Da giai phong bo nho!\n";
+                cout << "Ket thuc chuong trinh.\n";
+
+                break;
+            }
+
+            default:
+                cout << "Lua chon khong hop le!\n";
+        }
+
+    } while (luaChon != 0);
+
+    return 0;
+}
